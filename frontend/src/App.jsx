@@ -1,53 +1,103 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { generateCustomers } from "./userData/generateData";
-import CustomersTable from "./components/CustomersTable";
 import SearchInput from "./components/SearchInput";
 import FilterDropdown from "./components/FilterDropdown";
-import { FaCheckDouble } from "react-icons/fa"; // double tick icon
+import { FaCheckDouble } from "react-icons/fa";
 import "./styles.css";
+
+const CHUNK_SIZE = 1000; // load 1000 rows at a time
+const TOTAL_ROWS = 1_000_000;
 
 const App = () => {
   const [customers, setCustomers] = useState([]);
   const [filtered, setFiltered] = useState([]);
+  const [displayed, setDisplayed] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const containerRef = useRef(null);
 
+  // Generate 1M customers on mount
   useEffect(() => {
-    // Use 1000 records for now to avoid freezing the browser
-    const data = generateCustomers(10);
+    const data = generateCustomers(TOTAL_ROWS);
     setCustomers(data);
     setFiltered(data);
+    setDisplayed(data.slice(0, CHUNK_SIZE));
   }, []);
 
+  // Handle search
   const handleSearch = (query) => {
     const lower = query.toLowerCase();
-
     if (!lower) {
       setFiltered(customers);
+      setDisplayed(customers.slice(0, CHUNK_SIZE));
       return;
     }
 
-    setFiltered(
-      customers.filter(
-        (c) =>
-          c.name.toLowerCase().includes(lower) ||
-          c.email.toLowerCase().includes(lower) ||
-          c.phone.includes(lower)
-      )
+    const filteredData = customers.filter(
+      (c) =>
+        c.name.toLowerCase().includes(lower) ||
+        c.email.toLowerCase().includes(lower) ||
+        c.phone.includes(lower)
     );
+    setFiltered(filteredData);
+    setDisplayed(filteredData.slice(0, CHUNK_SIZE));
+  };
+
+  // Handle scroll to load more
+  const handleScroll = () => {
+    const container = containerRef.current;
+    if (!container || loading) return;
+
+    const { scrollTop, scrollHeight, clientHeight } = container;
+
+    if (scrollTop + clientHeight >= scrollHeight - 50) {
+      setLoading(true);
+      setTimeout(() => {
+        const currentLength = displayed.length;
+        const nextChunk = filtered.slice(currentLength, currentLength + CHUNK_SIZE);
+        setDisplayed([...displayed, ...nextChunk]);
+        setLoading(false);
+      }, 100); // simulate async loading
+    }
   };
 
   return (
     <div className="app-container">
       {/* Double tick icon */}
-      <div className="double-tick" style={{ fontSize: "2rem", color: "green",borderBottom:" 1px black solid",padding:0 }}>
-       DoubleTick
+      <div
+        className="double-tick"
+        style={{
+          fontSize: "2rem",
+          color: "green",
+          borderBottom: "1px black solid",
+          padding: "5px",
+        }}
+      >
+        <FaCheckDouble /> DoubleTick
       </div>
 
-      {/* All Customers text with number */}
-      <div className="all-customers" style={{ fontSize: "1.5rem", margin: "10px 0" }}>
-        All Customers <span style={{ color: "green", fontWeight: "bold" }}>1230</span>
+      {/* All Customers */}
+      <div
+        className="all-customers"
+        style={{ fontSize: "1.5rem", margin: "10px 0" }}
+      >
+        All Customers{" "}
+        <span style={{ color: "green", fontWeight: "bold" }}>
+          {filtered.length}
+        </span>
       </div>
 
-      <div className="header-bar">
+      <div
+        className="header-bar"
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          position: "sticky",
+          top: 0,
+          background: "#fff",
+          zIndex: 10,
+          padding: "5px 0",
+        }}
+      >
         <div className="search-container">
           <SearchInput onSearch={handleSearch} />
         </div>
@@ -56,11 +106,61 @@ const App = () => {
         </div>
       </div>
 
-      {filtered.length === 0 ? (
-        <div className="no-results">No results found</div>
-      ) : (
-        <CustomersTable data={filtered} />
-      )}
+      <div
+        ref={containerRef}
+        onScroll={handleScroll}
+        style={{ height: "600px", overflowY: "auto", border: "1px solid #ddd" }}
+      >
+  <div
+  style={{
+    display: "flex",
+    fontWeight: "bold",
+    padding: "0 10px",
+    borderBottom: "2px solid #000",
+    alignItems: "center",
+  }}
+>
+  <div style={{ width: "40px" }}><input type="checkbox" /></div>
+  <div style={{ flex: 1 }}>Customer</div>
+  <div style={{ flex: 1 }}>Score</div>
+  <div style={{ flex: 1 }}>Email</div>
+  <div style={{ flex: 1 }}>Last message sent at</div>
+  <div style={{ flex: 1 }}>Added By</div>
+</div>
+
+{displayed.map((customer, index) => (
+  <div
+    key={index}
+    style={{
+      display: "flex",
+      padding: "0 10px",
+      borderBottom: "1px solid #eee",
+      height: "60px",
+      alignItems: "center",
+    }}
+  >
+    <div style={{ width: "40px" }}><input type="checkbox" /></div>
+    <div style={{ flex: 1, display: "flex", alignItems: "center" }}>
+      <img
+        src={customer.avatar}
+        alt={customer.name}
+        style={{ width: 36, height: 36, borderRadius: "50%", marginRight: "10px" }}
+      />
+      <span>{customer.name}</span>
+      <span style={{ marginLeft: "auto", color: "#888" }}>{customer.phone}</span>
+    </div>
+    <div style={{ flex: 1 }}>{customer.score}</div>
+    <div style={{ flex: 1 }}>{customer.email}</div>
+    <div style={{ flex: 1 }}>{new Date(customer.lastMessageAt).toLocaleString()}</div>
+    <div style={{ flex: 1 }}>{customer.addedBy}</div>
+  </div>
+))}
+
+
+        {loading && (
+          <div style={{ padding: "10px", textAlign: "center" }}>Loading more...</div>
+        )}
+      </div>
     </div>
   );
 };

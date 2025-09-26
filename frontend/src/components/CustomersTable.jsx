@@ -1,150 +1,154 @@
-// src/components/CustomersTable.jsx
-import React, { useState, useMemo } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import { generateCustomers } from "./userData/generateData";
+import SearchInput from "./components/SearchInput";
+import FilterDropdown from "./components/FilterDropdown";
+import { FaCheckDouble } from "react-icons/fa";
+import "./styles.css";
 
-const CustomersTable = ({ data }) => {
-  const [sortConfig, setSortConfig] = useState({ key: "id", direction: "asc" });
+const CHUNK_SIZE = 1000; // load 1000 rows at a time
+const TOTAL_ROWS = 1_000_000;
 
-  const handleSort = (key) => {
-    setSortConfig((prev) => ({
-      key,
-      direction:
-        prev.key === key && prev.direction === "asc" ? "desc" : "asc",
-    }));
+const App = () => {
+  const [customers, setCustomers] = useState([]);
+  const [filtered, setFiltered] = useState([]);
+  const [displayed, setDisplayed] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const containerRef = useRef(null);
+
+  // Generate 1M customers on mount
+  useEffect(() => {
+    const data = generateCustomers(TOTAL_ROWS);
+    setCustomers(data);
+    setFiltered(data);
+    setDisplayed(data.slice(0, CHUNK_SIZE));
+  }, []);
+
+  // Handle search
+  const handleSearch = (query) => {
+    const lower = query.toLowerCase();
+    if (!lower) {
+      setFiltered(customers);
+      setDisplayed(customers.slice(0, CHUNK_SIZE));
+      return;
+    }
+
+    const filteredData = customers.filter(
+      (c) =>
+        c.name.toLowerCase().includes(lower) ||
+        c.email.toLowerCase().includes(lower) ||
+        c.phone.includes(lower)
+    );
+    setFiltered(filteredData);
+    setDisplayed(filteredData.slice(0, CHUNK_SIZE));
   };
 
-  const sortedData = useMemo(() => {
-    if (!data) return [];
-    return [...data].sort((a, b) => {
-      if (a[sortConfig.key] < b[sortConfig.key])
-        return sortConfig.direction === "asc" ? -1 : 1;
-      if (a[sortConfig.key] > b[sortConfig.key])
-        return sortConfig.direction === "asc" ? 1 : -1;
-      return 0;
-    });
-  }, [data, sortConfig]);
+  // Handle scroll to load more
+  const handleScroll = () => {
+    const container = containerRef.current;
+    if (!container || loading) return;
 
-  const formatDate = (date) => {
-    return new Date(date).toLocaleString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+    const { scrollTop, scrollHeight, clientHeight } = container;
+
+    if (scrollTop + clientHeight >= scrollHeight - 50) {
+      setLoading(true);
+      setTimeout(() => {
+        const currentLength = displayed.length;
+        const nextChunk = filtered.slice(currentLength, currentLength + CHUNK_SIZE);
+        setDisplayed([...displayed, ...nextChunk]);
+        setLoading(false);
+      }, 100); // simulate async loading
+    }
   };
 
   return (
-    <>
-     <style>{`
-  .table-container {
-    height: 600px;
-    overflow-y: auto;
-  }
+    <div className="app-container">
+      {/* Double tick icon */}
+      <div
+        className="double-tick"
+        style={{
+          fontSize: "2rem",
+          color: "green",
+          borderBottom: "1px black solid",
+          padding: "5px",
+        }}
+      >
+        <FaCheckDouble /> DoubleTick
+      </div>
 
-  .table-header {
-    display: grid;
-    grid-template-columns: 40px 300px 100px 250px 250px 1fr; /* last col flexible */
-    background: #f9fafb;
-    font-weight: 600;
-    font-size: 14px;
-    color: #374151;
-    border-bottom: 1px solid #e5e7eb;
-    position: sticky;
-    top: 0;
-    z-index: 1;
-    height: 50px;
-    align-items: center;
-    padding: 0 10px;
-  }
+      {/* All Customers */}
+      <div
+        className="all-customers"
+        style={{ fontSize: "1.5rem", margin: "10px 0" }}
+      >
+        All Customers{" "}
+        <span style={{ color: "green", fontWeight: "bold" }}>
+          {filtered.length}
+        </span>
+      </div>
 
-  .table-header div {
-    cursor: pointer;
-    padding: 0 8px;
-    white-space: nowrap;
-  }
+      <div
+        className="header-bar"
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          position: "sticky",
+          top: 0,
+          background: "#fff",
+          zIndex: 10,
+          padding: "5px 0",
+        }}
+      >
+        <div className="search-container">
+          <SearchInput onSearch={handleSearch} />
+        </div>
+        <div className="filter-container">
+          <FilterDropdown />
+        </div>
+      </div>
 
-  .table-row {
-    display: grid;
-    grid-template-columns: 40px 300px 100px 250px 250px 1fr; /* last col flexible */
-    align-items: center;
-    border-bottom: 1px solid #e5e7eb;
-    height: 60px;
-    padding: 0 10px;
-    font-size: 14px;
-    color: #111827;
-    transition: background 0.2s ease;
-  }
-
-  .table-row:hover {
-    background: #f3f4f6;
-  }
-
-  .customer-cell {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-
-  .customer-cell img {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    border: 2px solid #e5e7eb;
-  }
-
-  .customer-info {
-    display: flex;
-    flex-direction: column;
-  }
-
-  .customer-name {
-    font-weight: 500;
-  }
-
-  .customer-phone {
-    font-size: 12px;
-    color: #6b7280;
-  }
-`}</style>
-
-
-      <div className="table-container">
+      <div
+        ref={containerRef}
+        onScroll={handleScroll}
+        style={{ height: "600px", overflowY: "auto", border: "1px solid #ddd" }}
+      >
         {/* Table header */}
-        <div className="table-header">
-          <div>
-            <input type="checkbox" />
-          </div>
-          <div onClick={() => handleSort("name")}>Customer</div>
-                    <div onClick={() => handleSort("score")}>Score</div>
-
-          <div onClick={() => handleSort("email")}>Email</div>
-          <div onClick={() => handleSort("lastMessageAt")}>Last message sent at</div>
-          <div onClick={() => handleSort("addedBy")}>Added by</div>
+        <div
+          style={{
+            display: "flex",
+            fontWeight: "bold",
+            padding: "0 10px",
+            borderBottom: "2px solid #000",
+          }}
+        >
+          <div style={{ flex: 1 }}>Name</div>
+          <div style={{ flex: 1 }}>Email</div>
+          <div style={{ flex: 1 }}>Phone</div>
         </div>
 
         {/* Table rows */}
-        {sortedData.map((row) => (
-          <div key={row.id} className="table-row">
-            <div>
-              <input type="checkbox" />
-            </div>
-            <div className="customer-cell">
-              <img src={row.avatar} alt={row.name} />
-              <div className="customer-info">
-                <span className="customer-name">{row.name}</span>
-                <span className="customer-phone">{row.phone}</span>
-              </div>
-            </div>
-                        <div>{row.score}</div>
-
-            <div>{row.email}</div>
-            <div>{formatDate(row.lastMessageAt)}</div>
-            <div>{row.addedBy}</div>
+        {displayed.map((customer, index) => (
+          <div
+            key={index}
+            style={{
+              display: "flex",
+              padding: "0 10px",
+              borderBottom: "1px solid #eee",
+              height: "50px",
+              alignItems: "center",
+            }}
+          >
+            <div style={{ flex: 1 }}>{customer.name}</div>
+            <div style={{ flex: 1 }}>{customer.email}</div>
+            <div style={{ flex: 1 }}>{customer.phone}</div>
           </div>
         ))}
+
+        {loading && (
+          <div style={{ padding: "10px", textAlign: "center" }}>Loading more...</div>
+        )}
       </div>
-    </>
+    </div>
   );
 };
 
-export default CustomersTable;
+export default App;
