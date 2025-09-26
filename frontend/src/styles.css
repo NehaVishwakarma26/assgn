@@ -1,0 +1,58 @@
+.app-container {
+  padding: 20px;
+}
+
+.header-bar {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.search-input {
+  margin-bottom: 10px;
+  padding: 8px;
+  width: 300px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.filter-dropdown {
+  position: relative;
+  display: inline-block;
+  margin-left: 20px;
+}
+
+.filter-dropdown button {
+  padding: 6px 12px;
+  cursor: pointer;
+}
+
+.filter-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: #fff;
+  border: 1px solid #ccc;
+  padding: 10px;
+  margin-top: 5px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.table-row:hover {
+  background-color: #f5f5f5;
+  cursor: pointer;
+}
+
+.table-header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: #eee;
+  padding: 0 10px;
+}
+
+.no-results {
+  margin-top: 20px;
+  font-style: italic;
+  color: #555;
+}
