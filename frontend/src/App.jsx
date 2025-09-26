@@ -1,11 +1,10 @@
 import React, { useState, useEffect, useRef } from "react";
 import { generateCustomers } from "./userData/generateData";
-import SearchInput from "./components/SearchInput";
-import FilterDropdown from "./components/FilterDropdown";
-import { FaCheckDouble } from "react-icons/fa";
-import "./styles.css";
+import Header from "./components/Header";
+import SearchFilterBar from "./components/SearchFilterBar";
+import CustomerTable from "./components/CustomerTable";
 
-const CHUNK_SIZE = 1000; // load 1000 rows at a time
+const CHUNK_SIZE = 1000;
 const TOTAL_ROWS = 1_000_000;
 
 const App = () => {
@@ -15,7 +14,6 @@ const App = () => {
   const [loading, setLoading] = useState(false);
   const containerRef = useRef(null);
 
-  // Generate 1M customers on mount
   useEffect(() => {
     const data = generateCustomers(TOTAL_ROWS);
     setCustomers(data);
@@ -23,7 +21,6 @@ const App = () => {
     setDisplayed(data.slice(0, CHUNK_SIZE));
   }, []);
 
-  // Handle search
   const handleSearch = (query) => {
     const lower = query.toLowerCase();
     if (!lower) {
@@ -31,7 +28,6 @@ const App = () => {
       setDisplayed(customers.slice(0, CHUNK_SIZE));
       return;
     }
-
     const filteredData = customers.filter(
       (c) =>
         c.name.toLowerCase().includes(lower) ||
@@ -42,13 +38,11 @@ const App = () => {
     setDisplayed(filteredData.slice(0, CHUNK_SIZE));
   };
 
-  // Handle scroll to load more
   const handleScroll = () => {
     const container = containerRef.current;
     if (!container || loading) return;
 
     const { scrollTop, scrollHeight, clientHeight } = container;
-
     if (scrollTop + clientHeight >= scrollHeight - 50) {
       setLoading(true);
       setTimeout(() => {
@@ -56,111 +50,20 @@ const App = () => {
         const nextChunk = filtered.slice(currentLength, currentLength + CHUNK_SIZE);
         setDisplayed([...displayed, ...nextChunk]);
         setLoading(false);
-      }, 100); // simulate async loading
+      }, 100);
     }
   };
 
   return (
     <div className="app-container">
-      {/* Double tick icon */}
-      <div
-        className="double-tick"
-        style={{
-          fontSize: "2rem",
-          color: "green",
-          borderBottom: "1px black solid",
-          padding: "5px",
-        }}
-      >
-        <FaCheckDouble /> DoubleTick
-      </div>
-
-      {/* All Customers */}
-      <div
-        className="all-customers"
-        style={{ fontSize: "1.5rem", margin: "10px 0" }}
-      >
-        All Customers{" "}
-        <span style={{ color: "green", fontWeight: "bold" }}>
-          {filtered.length}
-        </span>
-      </div>
-
-      <div
-        className="header-bar"
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          position: "sticky",
-          top: 0,
-          background: "#fff",
-          zIndex: 10,
-          padding: "5px 0",
-        }}
-      >
-        <div className="search-container">
-          <SearchInput onSearch={handleSearch} />
-        </div>
-        <div className="filter-container">
-          <FilterDropdown />
-        </div>
-      </div>
-
-      <div
-        ref={containerRef}
+      <Header total={filtered.length} />
+      <SearchFilterBar onSearch={handleSearch} />
+      <CustomerTable
+        customers={displayed}
+        containerRef={containerRef}
         onScroll={handleScroll}
-        style={{ height: "600px", overflowY: "auto", border: "1px solid #ddd" }}
-      >
-  <div
-  style={{
-    display: "flex",
-    fontWeight: "bold",
-    padding: "0 10px",
-    borderBottom: "2px solid #000",
-    alignItems: "center",
-  }}
->
-  <div style={{ width: "40px" }}><input type="checkbox" /></div>
-  <div style={{ flex: 1 }}>Customer</div>
-  <div style={{ flex: 1 }}>Score</div>
-  <div style={{ flex: 1 }}>Email</div>
-  <div style={{ flex: 1 }}>Last message sent at</div>
-  <div style={{ flex: 1 }}>Added By</div>
-</div>
-
-{displayed.map((customer, index) => (
-  <div
-    key={index}
-    style={{
-      display: "flex",
-      padding: "0 10px",
-      borderBottom: "1px solid #eee",
-      height: "60px",
-      alignItems: "center",
-    }}
-  >
-    <div style={{ width: "40px" }}><input type="checkbox" /></div>
-    <div style={{ flex: 1, display: "flex", alignItems: "center" }}>
-      <img
-        src={customer.avatar}
-        alt={customer.name}
-        style={{ width: 36, height: 36, borderRadius: "50%", marginRight: "10px" }}
+        loading={loading}
       />
-      <span>{customer.name}</span>
-      <span style={{ marginLeft: "auto", color: "#888" }}>{customer.phone}</span>
-    </div>
-    <div style={{ flex: 1 }}>{customer.score}</div>
-    <div style={{ flex: 1 }}>{customer.email}</div>
-    <div style={{ flex: 1 }}>{new Date(customer.lastMessageAt).toLocaleString()}</div>
-    <div style={{ flex: 1 }}>{customer.addedBy}</div>
-  </div>
-))}
-
-
-        {loading && (
-          <div style={{ padding: "10px", textAlign: "center" }}>Loading more...</div>
-        )}
-      </div>
     </div>
   );
 };
