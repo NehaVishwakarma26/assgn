@@ -12,7 +12,7 @@ export const generateCustomers = (count = 100) => {
       score: faker.number.int({ min: 0, max: 100 }),
       lastMessageAt: faker.date.recent(),
       addedBy: faker.person.fullName(),
-      avatar: faker.image.avatar(),
+      avatar: "https://img.freepik.com/free-vector/smiling-young-man-illustration_1308-174669.jpg?semt=ais_incoming&w=740&q=80",
     });
   }
   return data;

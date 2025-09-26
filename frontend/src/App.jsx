@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { generateCustomers } from './data/generateData';
+import { generateCustomers } from './userData/generateData';
 import CustomersTable from './components/CustomersTable';
 import SearchInput from './components/SearchInput';
 import FilterDropdown from './components/FilterDropdown';
@@ -10,22 +10,31 @@ const App = () => {
   const [filtered, setFiltered] = useState([]);
 
   useEffect(() => {
-    const data = generateCustomers(1000000); // 1M records
+    // Use 1000 records for now to avoid freezing the browser
+    const data = generateCustomers(10); 
     setCustomers(data);
     setFiltered(data);
   }, []);
 
-  const handleSearch = (query) => {
-    const lower = query.toLowerCase();
-    setFiltered(
-      customers.filter(
-        (c) =>
-          c.name.toLowerCase().includes(lower) ||
-          c.email.toLowerCase().includes(lower) ||
-          c.phone.includes(lower)
-      )
-    );
-  };
+ const handleSearch = (query) => {
+  const lower = query.toLowerCase();
+
+  if (!lower) {
+    // If search box is empty, show all customers
+    setFiltered(customers);
+    return;
+  }
+
+  setFiltered(
+    customers.filter(
+      (c) =>
+        c.name.toLowerCase().includes(lower) ||
+        c.email.toLowerCase().includes(lower) ||
+        c.phone.includes(lower)
+    )
+  );
+};
+
 
   return (
     <div className="app-container">
