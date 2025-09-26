@@ -35,77 +35,78 @@ const CustomersTable = ({ data }) => {
 
   return (
     <>
-      <style>{`
-        .table-container {
-          height: 600px;
-          overflow-y: auto;
-        }
+     <style>{`
+  .table-container {
+    height: 600px;
+    overflow-y: auto;
+  }
 
-        .table-header {
-          display: grid;
-          grid-template-columns: 40px 300px 250px 100px 200px 200px;
-          background: #f9fafb;
-          font-weight: 600;
-          font-size: 14px;
-          color: #374151;
-          border-bottom: 1px solid #e5e7eb;
-          position: sticky;
-          top: 0;
-          z-index: 1;
-          height: 50px;
-          align-items: center;
-          padding: 0 10px;
-        }
+  .table-header {
+    display: grid;
+    grid-template-columns: 40px 300px 100px 250px 250px 1fr; /* last col flexible */
+    background: #f9fafb;
+    font-weight: 600;
+    font-size: 14px;
+    color: #374151;
+    border-bottom: 1px solid #e5e7eb;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    height: 50px;
+    align-items: center;
+    padding: 0 10px;
+  }
 
-        .table-header div {
-          cursor: pointer;
-          padding: 0 8px;
-          white-space: nowrap;
-        }
+  .table-header div {
+    cursor: pointer;
+    padding: 0 8px;
+    white-space: nowrap;
+  }
 
-        .table-row {
-          display: grid;
-          grid-template-columns: 40px 300px 250px 100px 200px 200px;
-          align-items: center;
-          border-bottom: 1px solid #e5e7eb;
-          height: 60px;
-          padding: 0 10px;
-          font-size: 14px;
-          color: #111827;
-          transition: background 0.2s ease;
-        }
+  .table-row {
+    display: grid;
+    grid-template-columns: 40px 300px 100px 250px 250px 1fr; /* last col flexible */
+    align-items: center;
+    border-bottom: 1px solid #e5e7eb;
+    height: 60px;
+    padding: 0 10px;
+    font-size: 14px;
+    color: #111827;
+    transition: background 0.2s ease;
+  }
 
-        .table-row:hover {
-          background: #f3f4f6;
-        }
+  .table-row:hover {
+    background: #f3f4f6;
+  }
 
-        .customer-cell {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-        }
+  .customer-cell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
 
-        .customer-cell img {
-          width: 36px;
-          height: 36px;
-          border-radius: 50%;
-          border: 2px solid #e5e7eb;
-        }
+  .customer-cell img {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 2px solid #e5e7eb;
+  }
 
-        .customer-info {
-          display: flex;
-          flex-direction: column;
-        }
+  .customer-info {
+    display: flex;
+    flex-direction: column;
+  }
 
-        .customer-name {
-          font-weight: 500;
-        }
+  .customer-name {
+    font-weight: 500;
+  }
 
-        .customer-phone {
-          font-size: 12px;
-          color: #6b7280;
-        }
-      `}</style>
+  .customer-phone {
+    font-size: 12px;
+    color: #6b7280;
+  }
+`}</style>
+
 
       <div className="table-container">
         {/* Table header */}
@@ -114,8 +115,9 @@ const CustomersTable = ({ data }) => {
             <input type="checkbox" />
           </div>
           <div onClick={() => handleSort("name")}>Customer</div>
+                    <div onClick={() => handleSort("score")}>Score</div>
+
           <div onClick={() => handleSort("email")}>Email</div>
-          <div onClick={() => handleSort("score")}>Score</div>
           <div onClick={() => handleSort("lastMessageAt")}>Last message sent at</div>
           <div onClick={() => handleSort("addedBy")}>Added by</div>
         </div>
@@ -133,8 +135,9 @@ const CustomersTable = ({ data }) => {
                 <span className="customer-phone">{row.phone}</span>
               </div>
             </div>
+                        <div>{row.score}</div>
+
             <div>{row.email}</div>
-            <div>{row.score}</div>
             <div>{formatDate(row.lastMessageAt)}</div>
             <div>{row.addedBy}</div>
           </div>
